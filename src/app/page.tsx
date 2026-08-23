@@ -2,6 +2,7 @@ import { Sparkles, LogOut } from "lucide-react";
 import { auth, signOut } from "@/auth";
 import { COLORS } from "@/lib/constants";
 import { DashboardApp } from "@/components/DashboardApp";
+import { ChangePasswordButton } from "@/components/ChangePasswordButton";
 
 export default async function Home() {
   const session = await auth();
@@ -16,19 +17,20 @@ export default async function Home() {
               Lullaby <span className="text-xs font-normal align-middle opacity-70">· quản lý nội bộ</span>
             </span>
           </div>
-          <form
-            action={async () => {
-              "use server";
-              await signOut({ redirectTo: "/login" });
-            }}
-          >
-            <div className="flex items-center gap-3">
-              {session?.user?.name && <span className="text-xs text-white/70">{session.user.name}</span>}
+          <div className="flex items-center gap-4">
+            {session?.user?.name && <span className="text-xs text-white/70">{session.user.name}</span>}
+            <ChangePasswordButton />
+            <form
+              action={async () => {
+                "use server";
+                await signOut({ redirectTo: "/login" });
+              }}
+            >
               <button type="submit" className="flex items-center gap-1.5 text-xs text-white/80 hover:text-white">
                 <LogOut size={13} /> Đăng xuất
               </button>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       </div>
       <DashboardApp />
