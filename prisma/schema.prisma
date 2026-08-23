@@ -1,0 +1,79 @@
+// Lullaby admin — database schema
+// Postgres (Neon), both for local dev and production.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  name         String
+  role         String   @default("staff") // "owner" | "staff"
+  createdAt    DateTime @default(now())
+}
+
+model Product {
+  id           String      @id @default(cuid())
+  code         String      @unique
+  category     String // "Váy đầm" | "Giày" | "Túi" | "Phụ kiện"
+  brand        String?
+  costPrice    Int?
+  rentPrice3   Int?
+  rentPriceDay Int?
+  size         String?
+  deposit      String?
+  notes        String?
+  status       String      @default("available") // available | cleaning | damaged | retired
+  photoUrl     String? // resized dataURL, or Vercel Blob URL later
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([category])
+  @@index([status])
+}
+
+// Customer identity is derived from (name, phone) on orders rather than a
+// separate table — matches the validated prototype logic (group by phone
+// in the Customers tab). Revisit if the shop wants customer-level fields
+// (loyalty notes, blacklist...) that don't belong on individual orders.
+model Order {
+  id              String      @id @default(cuid())
+  customerName    String
+  customerPhone   String?
+  invoiceDate     String // ISO date
+  pickupDate      String // ISO date
+  returnDate      String // ISO date
+  depositMethod   String? // CCCD | GPLX | Tiền mặt | Chuyển khoản
+  depositAmount   Int?
+  paymentCash     Int?
+  paymentTransfer Int?
+  note            String?
+  status          String      @default("Đã đặt") // Đã đặt | Đang thuê | Đã trả | Đã hủy
+  items           OrderItem[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([customerPhone])
+  @@index([status])
+}
+
+// No FK to Product: mirrors the prototype, where an item is just a product
+// code + a snapshotted rent price at booking time, and stays on the order
+// even if the product is later edited or deleted.
+model OrderItem {
+  id         String  @id @default(cuid())
+  order      Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId    String
+  code       String
+  rentPrice3 Int?
+
+  @@index([orderId])
+  @@index([code])
+}
