@@ -4,18 +4,29 @@ import { authConfig } from "@/auth.config";
 
 const { auth } = NextAuth(authConfig);
 
+// Public: the customer-facing catalog + its API, and the login screen.
+// Everything else (the internal admin app) requires a session.
+function isPublicPath(pathname: string) {
+  return pathname === "/login" || pathname === "/catalog" || pathname.startsWith("/catalog/") || pathname.startsWith("/api/public/");
+}
+
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
-  const isLoginPage = req.nextUrl.pathname === "/login";
-  const isApiRoute = req.nextUrl.pathname.startsWith("/api/");
+  const pathname = req.nextUrl.pathname;
+  const isLoginPage = pathname === "/login";
+  const isApiRoute = pathname.startsWith("/api/");
 
-  if (!isLoggedIn && !isLoginPage) {
+  if (isPublicPath(pathname)) {
+    if (isLoggedIn && isLoginPage) {
+      const url = new URL("/", req.nextUrl.origin);
+      return NextResponse.redirect(url);
+    }
+    return;
+  }
+
+  if (!isLoggedIn) {
     if (isApiRoute) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const url = new URL("/login", req.nextUrl.origin);
-    return NextResponse.redirect(url);
-  }
-  if (isLoggedIn && isLoginPage) {
-    const url = new URL("/", req.nextUrl.origin);
     return NextResponse.redirect(url);
   }
 });

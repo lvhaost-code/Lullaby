@@ -33,3 +33,30 @@ export type Order = {
   note: string | null;
   status: string;
 };
+
+// Public-safe product shape for the customer catalog — no costPrice.
+export type PublicProduct = {
+  id: string;
+  code: string;
+  category: string;
+  brand: string | null;
+  notes: string | null;
+  rentPrice3: number | null;
+  rentPriceDay: number | null;
+  size: string | null;
+  deposit: string | null;
+  status: string;
+  photoUrl: string | null;
+};
+
+export type BookingRequest = {
+  id: string;
+  customerName: string;
+  customerPhone: string;
+  items: { code: string }[];
+  pickupDate: string;
+  returnDate: string;
+  note: string | null;
+  status: string;
+  createdAt: string;
+};

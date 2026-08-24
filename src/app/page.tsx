@@ -1,4 +1,4 @@
-import { Sparkles, LogOut } from "lucide-react";
+import { Sparkles, LogOut, ExternalLink } from "lucide-react";
 import { auth, signOut } from "@/auth";
 import { COLORS } from "@/lib/constants";
 import { DashboardApp } from "@/components/DashboardApp";
@@ -19,6 +19,9 @@ export default async function Home() {
           </div>
           <div className="flex items-center gap-4">
             {session?.user?.name && <span className="text-xs text-white/70">{session.user.name}</span>}
+            <a href="/catalog" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-white/80 hover:text-white">
+              <ExternalLink size={13} /> Xem trang khách hàng
+            </a>
             <ChangePasswordButton />
             <form
               action={async () => {

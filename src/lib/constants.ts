@@ -28,3 +28,5 @@ export const TIER_STYLE: Record<string, { bg: string; fg: string; label: string 
   Premium: { bg: COLORS.roseSoft, fg: COLORS.roseDark, label: "Premium" },
   Special: { bg: COLORS.goldSoft, fg: "#93731F", label: "Special" },
 };
+
+export const SHOP_PHONE = "0783742752";

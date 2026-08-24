@@ -77,3 +77,30 @@ model OrderItem {
   @@index([orderId])
   @@index([code])
 }
+
+// A customer-submitted pre-booking from the public catalog (Giai đoạn 2).
+// Not a real reservation yet — staff call/Zalo the customer to confirm
+// availability and details, then either turn it into a real Order
+// ("confirmed") or dismiss it.
+model BookingRequest {
+  id            String               @id @default(cuid())
+  customerName  String
+  customerPhone String
+  pickupDate    String
+  returnDate    String
+  note          String?
+  status        String               @default("pending") // pending | confirmed | dismissed
+  items         BookingRequestItem[]
+  createdAt     DateTime             @default(now())
+
+  @@index([status])
+}
+
+model BookingRequestItem {
+  id        String         @id @default(cuid())
+  request   BookingRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  requestId String
+  code      String
+
+  @@index([requestId])
+}
