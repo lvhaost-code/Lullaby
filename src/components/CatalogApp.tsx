@@ -10,24 +10,28 @@ import type { PublicProduct } from "@/lib/types";
 
 function ProductCard({ p, onOpen }: { p: PublicProduct; onOpen: () => void }) {
   const tier = p.category === "Váy đầm" ? tierOfDress(p.rentPrice3) : null;
+  const name = p.brand || p.notes || p.category;
   return (
     <button
       onClick={onOpen}
       className="text-left rounded-xl overflow-hidden border border-stone-100 bg-white hover:shadow-md transition-shadow"
     >
       <div style={{ aspectRatio: "3/4", backgroundColor: "#F1E9E4" }}>
-        <ProductThumb photoUrl={p.photoUrl} fill rounded={0} />
+        <ProductThumb photoUrl={p.photos[0] ?? null} fill rounded={0} />
       </div>
       <div className="p-3">
         <div className="flex items-center justify-between gap-2">
-          <span className="text-sm font-medium text-stone-700">{p.code}</span>
+          <span className="text-sm font-medium text-stone-700 truncate">{name}</span>
           {tier && (
             <Badge bg={TIER_STYLE[tier].bg} fg={TIER_STYLE[tier].fg}>
               {TIER_STYLE[tier].label}
             </Badge>
           )}
         </div>
-        <div className="text-xs text-stone-400 mt-0.5">{p.brand || p.notes || p.category}</div>
+        <div className="text-xs text-stone-400 mt-0.5">
+          {p.code}
+          {p.size ? ` · Size ${p.size}` : ""}
+        </div>
         <div className="text-sm mt-1.5" style={{ color: COLORS.roseDark }}>
           {formatVND(p.rentPrice3)} <span className="text-xs text-stone-400">/ 3 ngày</span>
         </div>
@@ -103,9 +107,11 @@ function ProductDetailModal({ p, onClose }: { p: PublicProduct; onClose: () => v
   }
 
   const tier = p.category === "Váy đầm" ? tierOfDress(p.rentPrice3) : null;
+  const productName = p.brand || p.notes || p.category;
+  const [activePhoto, setActivePhoto] = useState(0);
 
   return (
-    <Modal title={p.code} onClose={onClose}>
+    <Modal title={`${productName} · ${p.code}`} onClose={onClose}>
       {success ? (
         <div className="text-center py-6">
           <div
@@ -124,26 +130,42 @@ function ProductDetailModal({ p, onClose }: { p: PublicProduct; onClose: () => v
         </div>
       ) : (
         <>
-          <div className="flex gap-3 mb-4">
-            <div style={{ width: 88, height: 88, borderRadius: 10, overflow: "hidden", flexShrink: 0 }}>
-              <ProductThumb photoUrl={p.photoUrl} size={88} rounded={10} />
+          <div style={{ aspectRatio: "1/1", borderRadius: 10, overflow: "hidden", backgroundColor: "#F1E9E4" }}>
+            <ProductThumb photoUrl={p.photos[activePhoto] ?? p.photos[0] ?? null} fill rounded={0} />
+          </div>
+          {p.photos.length > 1 && (
+            <div className="flex gap-1.5 mt-1.5 overflow-x-auto">
+              {p.photos.map((photo, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActivePhoto(i)}
+                  className="shrink-0 rounded-md overflow-hidden"
+                  style={{ width: 44, height: 44, outline: i === activePhoto ? `2px solid ${COLORS.rose}` : "none" }}
+                >
+                  <ProductThumb photoUrl={photo} size={44} rounded={6} />
+                </button>
+              ))}
             </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-medium text-stone-700">{p.brand || p.category}</span>
-                {tier && (
-                  <Badge bg={TIER_STYLE[tier].bg} fg={TIER_STYLE[tier].fg}>
-                    {TIER_STYLE[tier].label}
-                  </Badge>
-                )}
-              </div>
-              <div className="text-sm mt-1" style={{ color: COLORS.roseDark }}>
-                {formatVND(p.rentPrice3)} / 3 ngày
-                {p.rentPriceDay ? <span className="text-stone-400"> · {formatVND(p.rentPriceDay)} / ngày</span> : null}
-              </div>
-              {p.size && <div className="text-xs text-stone-400 mt-0.5">Size: {p.size}</div>}
-              {p.deposit && <div className="text-xs text-stone-400">Cọc: {p.deposit}</div>}
+          )}
+
+          <div className="mt-3 mb-4">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-medium text-stone-700">{productName}</span>
+              {tier && (
+                <Badge bg={TIER_STYLE[tier].bg} fg={TIER_STYLE[tier].fg}>
+                  {TIER_STYLE[tier].label}
+                </Badge>
+              )}
             </div>
+            <div className="text-xs text-stone-400 mt-0.5">
+              {p.code}
+              {p.size ? ` · Size ${p.size}` : ""}
+            </div>
+            <div className="text-sm mt-1" style={{ color: COLORS.roseDark }}>
+              {formatVND(p.rentPrice3)} / 3 ngày
+              {p.rentPriceDay ? <span className="text-stone-400"> · {formatVND(p.rentPriceDay)} / ngày</span> : null}
+            </div>
+            {p.deposit && <div className="text-xs text-stone-400 mt-0.5">Cọc: {p.deposit}</div>}
           </div>
 
           <div className="text-xs text-stone-500 mb-4">

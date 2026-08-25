@@ -51,9 +51,9 @@ export function DashboardApp() {
     setTimeout(() => setToast(null), 3200);
   }
 
-  async function saveProduct(data: Omit<Product, "id" | "photoUrl">, photoUrl: string | null | undefined, id: string | null) {
+  async function saveProduct(data: Omit<Product, "id" | "photos">, photos: string[], id: string | null) {
     try {
-      const payload = { ...data, ...(photoUrl !== undefined ? { photoUrl } : {}) };
+      const payload = { ...data, photos };
       const res = await fetch(id ? `/api/products/${id}` : "/api/products", {
         method: id ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },

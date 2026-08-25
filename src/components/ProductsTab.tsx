@@ -18,7 +18,7 @@ export function ProductsTab({
 }: {
   products: Product[];
   orders: Order[];
-  onSave: (data: Omit<Product, "id" | "photoUrl">, photoUrl: string | null | undefined, id: string | null) => void;
+  onSave: (data: Omit<Product, "id" | "photos">, photos: string[], id: string | null) => void;
   onDelete: (p: Product) => void;
 }) {
   const [search, setSearch] = useState("");
@@ -129,8 +129,8 @@ export function ProductsTab({
           <ProductForm
             initial={editing === "new" ? null : editing}
             onCancel={() => setEditing(null)}
-            onSave={(data, photo) => {
-              onSave(data, photo, editing === "new" ? null : editing.id);
+            onSave={(data, photos) => {
+              onSave(data, photos, editing === "new" ? null : editing.id);
               setEditing(null);
             }}
           />

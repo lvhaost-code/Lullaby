@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Image as ImageIcon } from "lucide-react";
+import { Loader2, Plus, X, Star } from "lucide-react";
 import { CATEGORIES, STATUS_KEYS, STATUS_LABELS, COLORS } from "@/lib/constants";
 import { resizeImageFile } from "@/lib/format";
 import { Field, inputCls } from "@/components/ui";
@@ -20,13 +20,15 @@ type FormState = {
   status: string;
 };
 
+const THUMB = 72;
+
 export function ProductForm({
   initial,
   onSave,
   onCancel,
 }: {
   initial: Product | null;
-  onSave: (data: Omit<Product, "id" | "photoUrl">, photoUrl: string | null | undefined) => void;
+  onSave: (data: Omit<Product, "id" | "photos">, photos: string[]) => void;
   onCancel: () => void;
 }) {
   const [f, setF] = useState<FormState>(
@@ -59,28 +61,28 @@ export function ProductForm({
   const set = (k: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setF({ ...f, [k]: e.target.value });
 
-  const [photo, setPhoto] = useState<string | null>(initial?.photoUrl ?? null);
+  const [photos, setPhotos] = useState<string[]>(initial?.photos ?? []);
   const [photoBusy, setPhotoBusy] = useState(false);
-  const [photoChanged, setPhotoChanged] = useState(false);
 
-  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files && e.target.files[0];
+  async function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files ? Array.from(e.target.files) : [];
     e.target.value = "";
-    if (!file) return;
+    if (files.length === 0) return;
     setPhotoBusy(true);
     try {
-      const dataUrl = await resizeImageFile(file);
-      setPhoto(dataUrl);
-      setPhotoChanged(true);
+      const dataUrls = await Promise.all(files.map((file) => resizeImageFile(file)));
+      setPhotos((prev) => [...prev, ...dataUrls]);
     } catch {
-      // ignore — user can just try another photo
+      // ignore — user can just try again
     } finally {
       setPhotoBusy(false);
     }
   }
-  function removePhoto() {
-    setPhoto(null);
-    setPhotoChanged(true);
+  function removePhoto(i: number) {
+    setPhotos((prev) => prev.filter((_, idx) => idx !== i));
+  }
+  function makeCover(i: number) {
+    setPhotos((prev) => [prev[i], ...prev.filter((_, idx) => idx !== i)]);
   }
 
   function submit() {
@@ -98,41 +100,57 @@ export function ProductForm({
         notes: f.notes,
         status: f.status,
       },
-      photoChanged ? photo : undefined
+      photos
     );
   }
 
   return (
     <div>
-      <Field label="Ảnh sản phẩm">
-        <div className="flex items-center gap-3">
-          <div
-            style={{ width: 72, height: 72, borderRadius: 10, overflow: "hidden", backgroundColor: "#F1E9E4" }}
-            className="flex items-center justify-center shrink-0"
-          >
-            {photoBusy ? (
-              <Loader2 size={18} className="animate-spin text-stone-300" />
-            ) : photo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={photo} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
-            ) : (
-              <ImageIcon size={22} className="text-stone-300" />
-            )}
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label
-              className="text-xs font-medium px-3 py-1.5 rounded-lg cursor-pointer text-center"
-              style={{ backgroundColor: COLORS.roseSoft, color: COLORS.roseDark }}
-            >
-              {photo ? "Đổi ảnh" : "Tải ảnh lên"}
-              <input type="file" accept="image/*" className="hidden" onChange={handleFile} />
-            </label>
-            {photo && (
-              <button type="button" onClick={removePhoto} className="text-xs text-stone-400 hover:text-red-500">
-                Xóa ảnh
+      <Field label={`Ảnh sản phẩm${photos.length > 1 ? " (ảnh đầu là ảnh bìa)" : ""}`}>
+        <div className="flex items-center gap-2.5 flex-wrap">
+          {photos.map((photo, i) => (
+            <div key={i} className="relative group" style={{ width: THUMB, height: THUMB }}>
+              <div style={{ width: THUMB, height: THUMB, borderRadius: 10, overflow: "hidden" }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={photo} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
+              </div>
+              {i === 0 ? (
+                <span
+                  className="absolute -top-1.5 -left-1.5 rounded-full p-0.5"
+                  style={{ backgroundColor: COLORS.gold }}
+                  title="Ảnh bìa"
+                >
+                  <Star size={11} color="white" fill="white" />
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => makeCover(i)}
+                  className="absolute -top-1.5 -left-1.5 rounded-full p-0.5 bg-white border border-stone-200 opacity-0 group-hover:opacity-100 transition-opacity"
+                  title="Đặt làm ảnh bìa"
+                >
+                  <Star size={11} className="text-stone-400" />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => removePhoto(i)}
+                className="absolute -top-1.5 -right-1.5 rounded-full p-0.5 text-white"
+                style={{ backgroundColor: "#B0453F" }}
+                title="Xóa ảnh"
+              >
+                <X size={11} />
               </button>
-            )}
-          </div>
+            </div>
+          ))}
+          <label
+            className="flex flex-col items-center justify-center gap-0.5 rounded-lg cursor-pointer shrink-0 text-stone-400"
+            style={{ width: THUMB, height: THUMB, backgroundColor: "#F1E9E4" }}
+          >
+            {photoBusy ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
+            <span className="text-[10px]">{photos.length === 0 ? "Tải ảnh lên" : "Thêm ảnh"}</span>
+            <input type="file" accept="image/*" multiple className="hidden" onChange={handleFiles} />
+          </label>
         </div>
       </Field>
       <div className="grid grid-cols-2 gap-x-3">

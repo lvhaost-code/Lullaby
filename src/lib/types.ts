@@ -10,7 +10,7 @@ export type Product = {
   deposit: string | null;
   notes: string | null;
   status: string;
-  photoUrl: string | null;
+  photos: string[]; // ordered, first = cover photo
 };
 
 export type OrderItemInput = {
@@ -46,7 +46,7 @@ export type PublicProduct = {
   size: string | null;
   deposit: string | null;
   status: string;
-  photoUrl: string | null;
+  photos: string[];
 };
 
 export type BookingRequest = {

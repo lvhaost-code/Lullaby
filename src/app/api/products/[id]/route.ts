@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { photosInclude, withPhotoUrls } from "@/lib/product-shape";
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -10,23 +11,31 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const conflict = await prisma.product.findFirst({ where: { code, NOT: { id } } });
   if (conflict) return NextResponse.json({ error: "Mã sản phẩm đã tồn tại" }, { status: 409 });
 
-  const product = await prisma.product.update({
-    where: { id },
-    data: {
-      code,
-      category: body.category || "Váy đầm",
-      brand: body.brand || null,
-      costPrice: body.costPrice ?? null,
-      rentPrice3: body.rentPrice3 ?? null,
-      rentPriceDay: body.rentPriceDay ?? null,
-      size: body.size || null,
-      deposit: body.deposit || null,
-      notes: body.notes || null,
-      status: body.status || "available",
-      ...(body.photoUrl !== undefined ? { photoUrl: body.photoUrl } : {}),
-    },
+  const photos: string[] | undefined = Array.isArray(body.photos) ? body.photos : undefined;
+
+  const product = await prisma.$transaction(async (tx) => {
+    if (photos !== undefined) {
+      await tx.productPhoto.deleteMany({ where: { productId: id } });
+    }
+    return tx.product.update({
+      where: { id },
+      data: {
+        code,
+        category: body.category || "Váy đầm",
+        brand: body.brand || null,
+        costPrice: body.costPrice ?? null,
+        rentPrice3: body.rentPrice3 ?? null,
+        rentPriceDay: body.rentPriceDay ?? null,
+        size: body.size || null,
+        deposit: body.deposit || null,
+        notes: body.notes || null,
+        status: body.status || "available",
+        ...(photos !== undefined ? { photos: { create: photos.map((url, i) => ({ url, sortOrder: i })) } } : {}),
+      },
+      include: photosInclude,
+    });
   });
-  return NextResponse.json(product);
+  return NextResponse.json(withPhotoUrls(product));
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

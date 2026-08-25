@@ -20,8 +20,8 @@ model User {
 }
 
 model Product {
-  id           String      @id @default(cuid())
-  code         String      @unique
+  id           String         @id @default(cuid())
+  code         String         @unique
   category     String // "Váy đầm" | "Giày" | "Túi" | "Phụ kiện"
   brand        String?
   costPrice    Int?
@@ -30,13 +30,26 @@ model Product {
   size         String?
   deposit      String?
   notes        String?
-  status       String      @default("available") // available | cleaning | damaged | retired
-  photoUrl     String? // resized dataURL, or Vercel Blob URL later
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  status       String         @default("available") // available | cleaning | damaged | retired
+  photos       ProductPhoto[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
 
   @@index([category])
   @@index([status])
+}
+
+// Multiple photos per product, shown as a gallery on the public catalog.
+// sortOrder 0 is the cover photo used in list/card thumbnails.
+model ProductPhoto {
+  id        String   @id @default(cuid())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  url       String // resized dataURL, or Vercel Blob URL later
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([productId])
 }
 
 // Customer identity is derived from (name, phone) on orders rather than a

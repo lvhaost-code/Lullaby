@@ -7,7 +7,11 @@
 // sheets, matches each one to its product code by cell position (see the
 // per-sheet column rules below — figured out by inspecting the workbook's
 // drawing anchors), resizes/compresses it the same way the admin app's own
-// upload does, and writes it to Product.photoUrl by code.
+// upload does, and adds it as a ProductPhoto by code.
+//
+// Only fills in products that currently have zero photos, so re-running
+// this later (e.g. the Excel file gets new images) never clobbers photos
+// staff have since added or reordered by hand in the app.
 import ExcelJS from "exceljs";
 import sharp from "sharp";
 import { PrismaClient } from "../src/generated/prisma/client.ts";
@@ -72,11 +76,12 @@ async function main() {
   const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
   const prisma = new PrismaClient({ adapter });
 
-  const products = await prisma.product.findMany({ select: { id: true, code: true, photoUrl: true } });
+  const products = await prisma.product.findMany({ select: { id: true, code: true, _count: { select: { photos: true } } } });
   const productByCode = new Map(products.map((p) => [p.code, p]));
 
   let updated = 0;
   let skippedNoProduct = 0;
+  let skippedHasPhoto = 0;
   let failed = 0;
 
   for (const [code, imageId] of codeToImageId) {
@@ -85,10 +90,14 @@ async function main() {
       skippedNoProduct++;
       continue;
     }
+    if (product._count.photos > 0) {
+      skippedHasPhoto++;
+      continue;
+    }
     try {
       const image = wb.getImage(imageId);
-      const photoUrl = await resizeToDataUrl(image.buffer);
-      await prisma.product.update({ where: { id: product.id }, data: { photoUrl } });
+      const url = await resizeToDataUrl(image.buffer);
+      await prisma.productPhoto.create({ data: { productId: product.id, url, sortOrder: 0 } });
       updated++;
       if (updated % 25 === 0) console.log(`  ...đã xử lý ${updated} ảnh`);
     } catch (e) {
@@ -98,7 +107,8 @@ async function main() {
   }
 
   console.log(`\nHoàn tất:`);
-  console.log(`  Đã cập nhật ảnh: ${updated} sản phẩm`);
+  console.log(`  Đã thêm ảnh: ${updated} sản phẩm`);
+  console.log(`  Bỏ qua (đã có ảnh sẵn): ${skippedHasPhoto} mã`);
   console.log(`  Bỏ qua (không có trong kho hiện tại): ${skippedNoProduct} mã`);
   if (failed) console.log(`  Lỗi: ${failed} ảnh`);
 
