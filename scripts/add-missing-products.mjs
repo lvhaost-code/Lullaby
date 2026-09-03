@@ -31,7 +31,7 @@ function cellStr(row, col) {
   return s === "" ? null : s;
 }
 
-async function resizeToDataUrl(buffer, maxDim = 480, quality = 72) {
+async function resizeToDataUrl(buffer, maxDim = 720, quality = 80) {
   const out = await sharp(buffer).rotate().resize({ width: maxDim, height: maxDim, fit: "inside", withoutEnlargement: true }).jpeg({ quality }).toBuffer();
   return `data:image/jpeg;base64,${out.toString("base64")}`;
 }

@@ -52,8 +52,10 @@ export function sizeSortIndex(size: string | null | undefined, sizeOrder: readon
 }
 
 // Resize + compress an uploaded image client-side so it stays small enough
-// to store inline as a dataURL on the product row.
-export function resizeImageFile(file: File, maxDim = 480, quality = 0.72): Promise<string> {
+// to store inline as a dataURL on the product row. 720px/0.8 balances
+// visible quality against the free-tier DB storage budget (see
+// scripts/import-photos.mjs for the equivalent server-side settings).
+export function resizeImageFile(file: File, maxDim = 720, quality = 0.8): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(new Error("Không đọc được ảnh"));

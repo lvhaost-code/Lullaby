@@ -34,7 +34,7 @@ const SHEET_RULES = {
   "Phụ kiện free": { dataStartRow: 1, codeColOffset: 1 },
 };
 
-async function resizeToDataUrl(buffer, maxDim = 480, quality = 72) {
+async function resizeToDataUrl(buffer, maxDim = 720, quality = 80) {
   const out = await sharp(buffer)
     .rotate() // respect EXIF orientation
     .resize({ width: maxDim, height: maxDim, fit: "inside", withoutEnlargement: true })
