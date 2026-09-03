@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Sparkles, Search, Phone, Loader2, Calendar, Check, AlertTriangle } from "lucide-react";
-import { CATEGORIES, COLORS, TIER_STYLE, SHOP_PHONE } from "@/lib/constants";
-import { formatVND, formatDateVN, todayISO, tierOfDress, rangesOverlap } from "@/lib/format";
+import { CATEGORIES, COLORS, TIER_STYLE, SHOP_PHONE, SIZE_ORDER } from "@/lib/constants";
+import { formatVND, formatDateVN, todayISO, tierOfDress, rangesOverlap, sortByCategoryOrder, sizeSortIndex } from "@/lib/format";
 import { Modal, Field, EmptyState, Badge, inputCls } from "@/components/ui";
 import { ProductThumb } from "@/components/ProductThumb";
 import type { PublicProduct } from "@/lib/types";
@@ -239,6 +239,7 @@ export function CatalogApp() {
   const [products, setProducts] = useState<PublicProduct[]>([]);
   const [search, setSearch] = useState("");
   const [cat, setCat] = useState<string>("Váy đầm");
+  const [size, setSize] = useState<string>("Tất cả");
   const [selected, setSelected] = useState<PublicProduct | null>(null);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 24;
@@ -250,16 +251,30 @@ export function CatalogApp() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Sizes available within the current category pick, so switching to
+  // e.g. "Giày" doesn't leave a dress size selected and filtering to zero.
+  const availableSizes = useMemo(() => {
+    const inCategory = cat === "Tất cả" ? products : products.filter((p) => p.category === cat);
+    const set = new Set(inCategory.map((p) => p.size).filter((s): s is string => !!s));
+    return [...set].sort((a, b) => sizeSortIndex(a, SIZE_ORDER) - sizeSortIndex(b, SIZE_ORDER));
+  }, [products, cat]);
+
+  useEffect(() => {
+    if (size !== "Tất cả" && !availableSizes.includes(size)) setSize("Tất cả");
+  }, [availableSizes, size]);
+
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
-    return products.filter((p) => {
+    const list = products.filter((p) => {
       if (cat !== "Tất cả" && p.category !== cat) return false;
+      if (size !== "Tất cả" && p.size !== size) return false;
       if (s && !(p.code.toLowerCase().includes(s) || (p.brand || "").toLowerCase().includes(s))) return false;
       return true;
     });
-  }, [products, search, cat]);
+    return sortByCategoryOrder(list, CATEGORIES);
+  }, [products, search, cat, size]);
 
-  useEffect(() => setPage(1), [search, cat]);
+  useEffect(() => setPage(1), [search, cat, size]);
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
@@ -303,6 +318,14 @@ export function CatalogApp() {
               <option key={c}>{c}</option>
             ))}
           </select>
+          {availableSizes.length > 0 && (
+            <select className={inputCls + " w-auto bg-white"} value={size} onChange={(e) => setSize(e.target.value)}>
+              <option value="Tất cả">Tất cả size</option>
+              {availableSizes.map((s) => (
+                <option key={s}>{s}</option>
+              ))}
+            </select>
+          )}
         </div>
 
         {loading ? (

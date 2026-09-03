@@ -1,5 +1,9 @@
 export const CATEGORIES = ["Váy đầm", "Giày", "Túi", "Phụ kiện"] as const;
 
+// Display order for sizes (dresses only, in practice) — not alphabetical,
+// so "L" doesn't sort before "M"/"S".
+export const SIZE_ORDER = ["XS", "S", "M", "L", "XL", "XXL", "Freesize"];
+
 export const STATUS_LABELS: Record<string, string> = {
   available: "Còn hàng",
   cleaning: "Đang giặt ủi",

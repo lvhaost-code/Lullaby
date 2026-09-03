@@ -35,6 +35,22 @@ export function monthKey(iso: string | null | undefined): string {
   return iso ? iso.slice(0, 7) : "";
 }
 
+// Stable sort: groups products by category in CATEGORIES order (dresses
+// first, accessories last), keeping each group's existing relative order.
+export function sortByCategoryOrder<T extends { category: string }>(items: T[], categoryOrder: readonly string[]): T[] {
+  return [...items].sort((a, b) => {
+    const ai = categoryOrder.indexOf(a.category);
+    const bi = categoryOrder.indexOf(b.category);
+    return (ai === -1 ? categoryOrder.length : ai) - (bi === -1 ? categoryOrder.length : bi);
+  });
+}
+
+export function sizeSortIndex(size: string | null | undefined, sizeOrder: readonly string[]): number {
+  if (!size) return sizeOrder.length;
+  const i = sizeOrder.indexOf(size);
+  return i === -1 ? sizeOrder.length : i;
+}
+
 // Resize + compress an uploaded image client-side so it stays small enough
 // to store inline as a dataURL on the product row.
 export function resizeImageFile(file: File, maxDim = 480, quality = 0.72): Promise<string> {

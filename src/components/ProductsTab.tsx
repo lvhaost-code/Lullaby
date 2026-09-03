@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Plus, Search, Package } from "lucide-react";
-import { CATEGORIES, STATUS_KEYS, STATUS_LABELS, COLORS } from "@/lib/constants";
+import { CATEGORIES, STATUS_KEYS, STATUS_LABELS, COLORS, SIZE_ORDER } from "@/lib/constants";
+import { sortByCategoryOrder, sizeSortIndex } from "@/lib/format";
 import { Modal, EmptyState, inputCls } from "@/components/ui";
 import { ProductRow } from "@/components/ProductRow";
 import { ProductForm } from "@/components/ProductForm";
@@ -23,22 +24,35 @@ export function ProductsTab({
 }) {
   const [search, setSearch] = useState("");
   const [cat, setCat] = useState("Tất cả");
+  const [size, setSize] = useState("Tất cả");
   const [status, setStatus] = useState("Tất cả");
   const [editing, setEditing] = useState<Product | "new" | null>(null);
   const [page, setPage] = useState(1);
 
+  const availableSizes = useMemo(() => {
+    const inCategory = cat === "Tất cả" ? products : products.filter((p) => p.category === cat);
+    const set = new Set(inCategory.map((p) => p.size).filter((s): s is string => !!s));
+    return [...set].sort((a, b) => sizeSortIndex(a, SIZE_ORDER) - sizeSortIndex(b, SIZE_ORDER));
+  }, [products, cat]);
+
+  useEffect(() => {
+    if (size !== "Tất cả" && !availableSizes.includes(size)) setSize("Tất cả");
+  }, [availableSizes, size]);
+
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
-    return products.filter((p) => {
+    const list = products.filter((p) => {
       if (cat !== "Tất cả" && p.category !== cat) return false;
+      if (size !== "Tất cả" && p.size !== size) return false;
       if (status !== "Tất cả" && p.status !== status) return false;
       if (s && !(p.code.toLowerCase().includes(s) || (p.brand || "").toLowerCase().includes(s) || (p.notes || "").toLowerCase().includes(s)))
         return false;
       return true;
     });
-  }, [products, search, cat, status]);
+    return sortByCategoryOrder(list, CATEGORIES);
+  }, [products, search, cat, size, status]);
 
-  useEffect(() => setPage(1), [search, cat, status]);
+  useEffect(() => setPage(1), [search, cat, size, status]);
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
@@ -60,6 +74,14 @@ export function ProductsTab({
             <option key={c}>{c}</option>
           ))}
         </select>
+        {availableSizes.length > 0 && (
+          <select className={inputCls + " w-auto"} value={size} onChange={(e) => setSize(e.target.value)}>
+            <option value="Tất cả">Tất cả size</option>
+            {availableSizes.map((s) => (
+              <option key={s}>{s}</option>
+            ))}
+          </select>
+        )}
         <select className={inputCls + " w-auto"} value={status} onChange={(e) => setStatus(e.target.value)}>
           <option>Tất cả</option>
           {STATUS_KEYS.map((s) => (
