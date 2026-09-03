@@ -1,16 +1,14 @@
 import { NextResponse } from "next/server";
-import { createBackup } from "@/lib/backup";
-import { prisma } from "@/lib/prisma";
+import { buildDownloadSnapshot } from "@/lib/backup";
 
-// Staff-triggered on-demand backup — creates a fresh snapshot (so it's
-// never stale) and returns it as a downloadable JSON file.
+// Staff-triggered on-demand backup — builds a fresh full snapshot
+// (including photos) and returns it as a downloadable JSON file. Doesn't
+// write to the DB, so clicking it repeatedly never costs storage; the
+// daily cron job handles persisted, pruned retention separately.
 export async function GET() {
-  const result = await createBackup();
-  const row = await prisma.backup.findUnique({ where: { id: result.id } });
-  if (!row) return NextResponse.json({ error: "Không tạo được backup" }, { status: 500 });
-
-  const filename = `lullaby-backup-${row.createdAt.toISOString().slice(0, 10)}.json`;
-  return new NextResponse(row.data, {
+  const snapshot = await buildDownloadSnapshot();
+  const filename = `lullaby-backup-${snapshot.createdAt.slice(0, 10)}.json`;
+  return new NextResponse(JSON.stringify(snapshot), {
     headers: {
       "Content-Type": "application/json",
       "Content-Disposition": `attachment; filename="${filename}"`,

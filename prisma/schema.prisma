@@ -118,14 +118,19 @@ model BookingRequestItem {
   @@index([requestId])
 }
 
-// Daily snapshot of products/orders/booking-requests/users (metadata only —
-// no photos, no password hashes) so an accidental delete or bad edit can be
-// recovered from further back than Neon's 24h point-in-time-recovery
-// window. Kept small on purpose: photos are re-importable from the shop's
-// own Excel file via scripts/import-photos.mjs, so duplicating them here
-// would burn through the free storage tier for little benefit.
+// Daily snapshot so an accidental delete or bad edit can be recovered from
+// further back than Neon's 24h point-in-time-recovery window.
+//
+// kind "metadata": products/orders/booking-requests/users, no photos, no
+// password hashes — cheap, kept 30 days deep.
+// kind "full": same, plus every product photo — expensive (photos are the
+// bulk of DB storage), so kept only a few days deep. Needed because photos
+// added by hand in the app (not from the shop's Excel) have no other copy.
 model Backup {
   id        String   @id @default(cuid())
+  kind      String   @default("metadata")
   createdAt DateTime @default(now())
   data      String // JSON snapshot
+
+  @@index([kind, createdAt])
 }

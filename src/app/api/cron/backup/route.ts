@@ -10,6 +10,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const result = await createBackup();
-  return NextResponse.json(result);
+  const [metadata, full] = await Promise.all([createBackup("metadata"), createBackup("full")]);
+  return NextResponse.json({ metadata, full });
 }
