@@ -1,4 +1,4 @@
-import { Sparkles, LogOut, ExternalLink } from "lucide-react";
+import { Sparkles, LogOut, ExternalLink, Download } from "lucide-react";
 import { auth, signOut } from "@/auth";
 import { COLORS } from "@/lib/constants";
 import { DashboardApp } from "@/components/DashboardApp";
@@ -21,6 +21,9 @@ export default async function Home() {
             {session?.user?.name && <span className="text-xs text-white/70">{session.user.name}</span>}
             <a href="/catalog" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-white/80 hover:text-white">
               <ExternalLink size={13} /> Xem trang khách hàng
+            </a>
+            <a href="/api/backup/download" className="flex items-center gap-1.5 text-xs text-white/80 hover:text-white">
+              <Download size={13} /> Tải backup
             </a>
             <ChangePasswordButton />
             <form

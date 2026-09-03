@@ -4,10 +4,17 @@ import { authConfig } from "@/auth.config";
 
 const { auth } = NextAuth(authConfig);
 
-// Public: the customer-facing catalog + its API, and the login screen.
-// Everything else (the internal admin app) requires a session.
+// Public: the customer-facing catalog + its API, the login screen, and the
+// Vercel Cron endpoint (which authenticates itself via CRON_SECRET instead
+// of a session — see src/app/api/cron/backup/route.ts).
 function isPublicPath(pathname: string) {
-  return pathname === "/login" || pathname === "/catalog" || pathname.startsWith("/catalog/") || pathname.startsWith("/api/public/");
+  return (
+    pathname === "/login" ||
+    pathname === "/catalog" ||
+    pathname.startsWith("/catalog/") ||
+    pathname.startsWith("/api/public/") ||
+    pathname.startsWith("/api/cron/")
+  );
 }
 
 export default auth((req) => {
