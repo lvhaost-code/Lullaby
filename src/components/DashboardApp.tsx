@@ -9,7 +9,7 @@ import { CustomersTab } from "@/components/CustomersTab";
 import { ReportsTab } from "@/components/ReportsTab";
 import { RequestsTab } from "@/components/RequestsTab";
 import { Toast, type ToastState } from "@/components/ui";
-import type { Product, Order, BookingRequest } from "@/lib/types";
+import type { Product, ProductDetail, Order, BookingRequest } from "@/lib/types";
 
 const TABS = [
   { key: "products", label: "Kho sản phẩm", icon: Package },
@@ -51,7 +51,7 @@ export function DashboardApp() {
     setTimeout(() => setToast(null), 3200);
   }
 
-  async function saveProduct(data: Omit<Product, "id" | "photos">, photos: string[], id: string | null) {
+  async function saveProduct(data: Omit<Product, "id" | "thumbUrl">, photos: string[], id: string | null) {
     try {
       const payload = { ...data, photos };
       const res = await fetch(id ? `/api/products/${id}` : "/api/products", {
@@ -64,7 +64,7 @@ export function DashboardApp() {
         showToast(err.error || "Lưu sản phẩm thất bại, thử lại nhé.", "error");
         return;
       }
-      const saved: Product = await res.json();
+      const saved: ProductDetail = await res.json();
       setProducts((prev) => (id ? prev.map((p) => (p.id === id ? saved : p)) : [saved, ...prev]));
       showToast(id ? "Đã cập nhật sản phẩm." : "Đã thêm sản phẩm mới.");
     } catch {

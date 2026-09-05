@@ -36,6 +36,11 @@ async function resizeToDataUrl(buffer, maxDim = 720, quality = 80) {
   return `data:image/jpeg;base64,${out.toString("base64")}`;
 }
 
+async function resizeThumbnail(buffer, maxDim = 160, quality = 65) {
+  const out = await sharp(buffer).rotate().resize({ width: maxDim, height: maxDim, fit: "inside", withoutEnlargement: true }).jpeg({ quality }).toBuffer();
+  return `data:image/jpeg;base64,${out.toString("base64")}`;
+}
+
 async function main() {
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.readFile(filePath);
@@ -91,7 +96,11 @@ async function main() {
     if (imageId !== undefined) {
       const image = wb.getImage(imageId);
       const url = await resizeToDataUrl(image.buffer);
-      await prisma.productPhoto.create({ data: { productId: product.id, url, sortOrder: 0 } });
+      const thumbUrl = await resizeThumbnail(image.buffer);
+      await prisma.$transaction([
+        prisma.productPhoto.create({ data: { productId: product.id, url, sortOrder: 0 } }),
+        prisma.product.update({ where: { id: product.id }, data: { thumbUrl } }),
+      ]);
       photoNote = " (+ ảnh)";
     }
     console.log(`Đã thêm ${code}: ${JSON.stringify(data)}${photoNote}`);

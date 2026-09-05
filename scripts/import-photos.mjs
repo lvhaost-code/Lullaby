@@ -43,6 +43,13 @@ async function resizeToDataUrl(buffer, maxDim = 720, quality = 80) {
   return `data:image/jpeg;base64,${out.toString("base64")}`;
 }
 
+// Small copy for list/grid views — see src/lib/thumbnail.ts (kept in sync
+// manually since this script runs outside the Next.js app).
+async function resizeThumbnail(buffer, maxDim = 160, quality = 65) {
+  const out = await sharp(buffer).rotate().resize({ width: maxDim, height: maxDim, fit: "inside", withoutEnlargement: true }).jpeg({ quality }).toBuffer();
+  return `data:image/jpeg;base64,${out.toString("base64")}`;
+}
+
 async function main() {
   console.log(`Đọc file: ${filePath}`);
   const wb = new ExcelJS.Workbook();
@@ -97,7 +104,11 @@ async function main() {
     try {
       const image = wb.getImage(imageId);
       const url = await resizeToDataUrl(image.buffer);
-      await prisma.productPhoto.create({ data: { productId: product.id, url, sortOrder: 0 } });
+      const thumbUrl = await resizeThumbnail(image.buffer);
+      await prisma.$transaction([
+        prisma.productPhoto.create({ data: { productId: product.id, url, sortOrder: 0 } }),
+        prisma.product.update({ where: { id: product.id }, data: { thumbUrl } }),
+      ]);
       updated++;
       if (updated % 25 === 0) console.log(`  ...đã xử lý ${updated} ảnh`);
     } catch (e) {

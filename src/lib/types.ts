@@ -1,3 +1,5 @@
+// List shape — thumbUrl only. Full photos are fetched on demand (see
+// ProductDetail) so the list/grid views don't ship every full-size photo.
 export type Product = {
   id: string;
   code: string;
@@ -10,8 +12,13 @@ export type Product = {
   deposit: string | null;
   notes: string | null;
   status: string;
-  photos: string[]; // ordered, first = cover photo
+  thumbUrl: string | null;
 };
+
+// Detail shape — includes every photo (ordered, first = cover). Also
+// carries thumbUrl since API responses that include this happen to have
+// it too; components generally only need one or the other.
+export type ProductDetail = Product & { photos: string[] };
 
 export type OrderItemInput = {
   code: string;
@@ -46,8 +53,10 @@ export type PublicProduct = {
   size: string | null;
   deposit: string | null;
   status: string;
-  photos: string[];
+  thumbUrl: string | null;
 };
+
+export type PublicProductDetail = PublicProduct & { photos: string[] };
 
 export type BookingRequest = {
   id: string;

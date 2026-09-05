@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2, Plus, X, Star } from "lucide-react";
 import { CATEGORIES, STATUS_KEYS, STATUS_LABELS, COLORS } from "@/lib/constants";
 import { resizeImageFile } from "@/lib/format";
 import { Field, inputCls } from "@/components/ui";
-import type { Product } from "@/lib/types";
+import type { Product, ProductDetail } from "@/lib/types";
 
 type FormState = {
   code: string;
@@ -28,7 +28,7 @@ export function ProductForm({
   onCancel,
 }: {
   initial: Product | null;
-  onSave: (data: Omit<Product, "id" | "photos">, photos: string[]) => void;
+  onSave: (data: Omit<Product, "id" | "thumbUrl">, photos: string[]) => void;
   onCancel: () => void;
 }) {
   const [f, setF] = useState<FormState>(
@@ -61,8 +61,28 @@ export function ProductForm({
   const set = (k: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setF({ ...f, [k]: e.target.value });
 
-  const [photos, setPhotos] = useState<string[]>(initial?.photos ?? []);
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [photosLoading, setPhotosLoading] = useState(!!initial);
   const [photoBusy, setPhotoBusy] = useState(false);
+
+  // The list view only carries a thumbnail — fetch the full gallery once,
+  // when editing an existing product.
+  useEffect(() => {
+    if (!initial) return;
+    let alive = true;
+    fetch(`/api/products/${initial.id}`)
+      .then((r) => r.json())
+      .then((detail: ProductDetail) => {
+        if (alive) setPhotos(detail.photos);
+      })
+      .finally(() => {
+        if (alive) setPhotosLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files ? Array.from(e.target.files) : [];
@@ -108,7 +128,15 @@ export function ProductForm({
     <div>
       <Field label={`Ảnh sản phẩm${photos.length > 1 ? " (ảnh đầu là ảnh bìa)" : ""}`}>
         <div className="flex items-center gap-2.5 flex-wrap">
-          {photos.map((photo, i) => (
+          {photosLoading ? (
+            <div
+              className="flex items-center justify-center shrink-0"
+              style={{ width: THUMB, height: THUMB, borderRadius: 10, backgroundColor: "#F1E9E4" }}
+            >
+              <Loader2 size={18} className="animate-spin text-stone-300" />
+            </div>
+          ) : (
+            photos.map((photo, i) => (
             <div key={i} className="relative group" style={{ width: THUMB, height: THUMB }}>
               <div style={{ width: THUMB, height: THUMB, borderRadius: 10, overflow: "hidden" }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -142,15 +170,18 @@ export function ProductForm({
                 <X size={11} />
               </button>
             </div>
-          ))}
-          <label
-            className="flex flex-col items-center justify-center gap-0.5 rounded-lg cursor-pointer shrink-0 text-stone-400"
-            style={{ width: THUMB, height: THUMB, backgroundColor: "#F1E9E4" }}
-          >
-            {photoBusy ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
-            <span className="text-[10px]">{photos.length === 0 ? "Tải ảnh lên" : "Thêm ảnh"}</span>
-            <input type="file" accept="image/*" multiple className="hidden" onChange={handleFiles} />
-          </label>
+            ))
+          )}
+          {!photosLoading && (
+            <label
+              className="flex flex-col items-center justify-center gap-0.5 rounded-lg cursor-pointer shrink-0 text-stone-400"
+              style={{ width: THUMB, height: THUMB, backgroundColor: "#F1E9E4" }}
+            >
+              {photoBusy ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
+              <span className="text-[10px]">{photos.length === 0 ? "Tải ảnh lên" : "Thêm ảnh"}</span>
+              <input type="file" accept="image/*" multiple className="hidden" onChange={handleFiles} />
+            </label>
+          )}
         </div>
       </Field>
       <div className="grid grid-cols-2 gap-x-3">

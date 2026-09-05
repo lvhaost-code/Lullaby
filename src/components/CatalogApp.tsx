@@ -17,7 +17,7 @@ function ProductCard({ p, onOpen }: { p: PublicProduct; onOpen: () => void }) {
       className="text-left rounded-xl overflow-hidden border border-stone-100 bg-white hover:shadow-md transition-shadow"
     >
       <div style={{ aspectRatio: "3/4", backgroundColor: "#F1E9E4" }}>
-        <ProductThumb photoUrl={p.photos[0] ?? null} fill rounded={0} />
+        <ProductThumb photoUrl={p.thumbUrl} fill rounded={0} />
       </div>
       <div className="p-3">
         <div className="flex items-center justify-between gap-2">
@@ -42,6 +42,9 @@ function ProductCard({ p, onOpen }: { p: PublicProduct; onOpen: () => void }) {
 
 function ProductDetailModal({ p, onClose }: { p: PublicProduct; onClose: () => void }) {
   const [ranges, setRanges] = useState<{ pickupDate: string; returnDate: string }[] | null>(null);
+  // Show the list thumbnail immediately, then swap in the full gallery once
+  // it loads — the list response only carries the small thumbnail.
+  const [photos, setPhotos] = useState<string[]>(p.thumbUrl ? [p.thumbUrl] : []);
 
   useEffect(() => {
     let alive = true;
@@ -49,6 +52,10 @@ function ProductDetailModal({ p, onClose }: { p: PublicProduct; onClose: () => v
       .then((r) => r.json())
       .then((d) => alive && setRanges(d))
       .catch(() => alive && setRanges([]));
+    fetch(`/api/public/products/${encodeURIComponent(p.code)}`)
+      .then((r) => r.json())
+      .then((detail: { photos: string[] }) => alive && detail.photos.length > 0 && setPhotos(detail.photos))
+      .catch(() => {});
     return () => {
       alive = false;
     };
@@ -131,11 +138,11 @@ function ProductDetailModal({ p, onClose }: { p: PublicProduct; onClose: () => v
       ) : (
         <>
           <div style={{ aspectRatio: "1/1", borderRadius: 10, overflow: "hidden", backgroundColor: "#F1E9E4" }}>
-            <ProductThumb photoUrl={p.photos[activePhoto] ?? p.photos[0] ?? null} fill rounded={0} />
+            <ProductThumb photoUrl={photos[activePhoto] ?? photos[0] ?? null} fill rounded={0} />
           </div>
-          {p.photos.length > 1 && (
+          {photos.length > 1 && (
             <div className="flex gap-1.5 mt-1.5 overflow-x-auto">
-              {p.photos.map((photo, i) => (
+              {photos.map((photo, i) => (
                 <button
                   key={i}
                   onClick={() => setActivePhoto(i)}
