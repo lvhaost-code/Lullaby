@@ -35,7 +35,7 @@ export function ProductRow({
       <tr className="border-b border-stone-100 hover:bg-stone-50/70 cursor-pointer" onClick={() => setOpen(!open)}>
         <td className="py-2 pl-3 pr-2 text-stone-400">{open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}</td>
         <td className="py-2 pr-3" onClick={(e) => e.stopPropagation()}>
-          <ProductThumb photoUrl={p.thumbUrl} size={36} rounded={7} />
+          <ProductThumb photoUrl={p.hasPhoto ? `/api/products/${p.id}/thumb` : null} size={36} rounded={7} />
         </td>
         <td className="py-2 pr-3 font-medium text-stone-700 whitespace-nowrap">{p.code}</td>
         <td className="py-2 pr-3 text-stone-500 whitespace-nowrap">{p.category}</td>
@@ -77,7 +77,7 @@ export function ProductRow({
         <tr className="bg-stone-50/60">
           <td colSpan={11} className="px-8 py-3 text-xs text-stone-500">
             <div className="flex gap-4">
-              <ProductThumb photoUrl={p.thumbUrl} size={72} rounded={10} />
+              <ProductThumb photoUrl={p.hasPhoto ? `/api/products/${p.id}/thumb` : null} size={72} rounded={10} />
               <div className="flex-1">
                 <div className="mb-1 font-medium text-stone-600">Lịch đã đặt (sắp tới):</div>
                 {bookings.length === 0 ? (

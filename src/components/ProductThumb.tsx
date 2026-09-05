@@ -27,5 +27,5 @@ export function ProductThumb({
     );
   }
   // eslint-disable-next-line @next/next/no-img-element
-  return <img src={photoUrl} style={style} alt="" />;
+  return <img src={photoUrl} style={style} alt="" loading="lazy" />;
 }

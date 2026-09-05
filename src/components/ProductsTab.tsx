@@ -19,7 +19,7 @@ export function ProductsTab({
 }: {
   products: Product[];
   orders: Order[];
-  onSave: (data: Omit<Product, "id" | "thumbUrl">, photos: string[], id: string | null) => void;
+  onSave: (data: Omit<Product, "id" | "hasPhoto">, photos: string[], id: string | null) => void;
   onDelete: (p: Product) => void;
 }) {
   const [search, setSearch] = useState("");

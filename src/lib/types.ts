@@ -1,5 +1,7 @@
-// List shape — thumbUrl only. Full photos are fetched on demand (see
-// ProductDetail) so the list/grid views don't ship every full-size photo.
+// List shape — no image bytes at all. A card renders its thumbnail from
+// GET /api/products/[id]/thumb (a real image URL the browser fetches,
+// caches, and lazy-loads), only when hasPhoto is true. Full photos are
+// fetched on demand (see ProductDetail).
 export type Product = {
   id: string;
   code: string;
@@ -12,12 +14,10 @@ export type Product = {
   deposit: string | null;
   notes: string | null;
   status: string;
-  thumbUrl: string | null;
+  hasPhoto: boolean;
 };
 
-// Detail shape — includes every photo (ordered, first = cover). Also
-// carries thumbUrl since API responses that include this happen to have
-// it too; components generally only need one or the other.
+// Detail shape — includes every photo (ordered, first = cover).
 export type ProductDetail = Product & { photos: string[] };
 
 export type OrderItemInput = {
@@ -53,7 +53,7 @@ export type PublicProduct = {
   size: string | null;
   deposit: string | null;
   status: string;
-  thumbUrl: string | null;
+  hasPhoto: boolean;
 };
 
 export type PublicProductDetail = PublicProduct & { photos: string[] };

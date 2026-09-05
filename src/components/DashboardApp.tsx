@@ -51,7 +51,7 @@ export function DashboardApp() {
     setTimeout(() => setToast(null), 3200);
   }
 
-  async function saveProduct(data: Omit<Product, "id" | "thumbUrl">, photos: string[], id: string | null) {
+  async function saveProduct(data: Omit<Product, "id" | "hasPhoto">, photos: string[], id: string | null) {
     try {
       const payload = { ...data, photos };
       const res = await fetch(id ? `/api/products/${id}` : "/api/products", {

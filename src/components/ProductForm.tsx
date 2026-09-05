@@ -28,7 +28,7 @@ export function ProductForm({
   onCancel,
 }: {
   initial: Product | null;
-  onSave: (data: Omit<Product, "id" | "thumbUrl">, photos: string[]) => void;
+  onSave: (data: Omit<Product, "id" | "hasPhoto">, photos: string[]) => void;
   onCancel: () => void;
 }) {
   const [f, setF] = useState<FormState>(

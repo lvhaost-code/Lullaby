@@ -3,8 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { photosInclude, withPhotoUrls } from "@/lib/product-shape";
 import { makeThumbnail } from "@/lib/thumbnail";
 
-// List view: thumbUrl only, not the full photos — a page of this used to
-// ship every product's full-size photo (tens of MB) just to render cards.
+// List view carries no image bytes at all — each row's thumbnail is a real
+// URL (GET /api/products/[id]/thumb) the browser fetches, caches, and
+// lazy-loads on its own, so a page only pays for the rows actually
+// rendered instead of every product's thumbnail regardless of pagination.
 export async function GET() {
   const products = await prisma.product.findMany({
     select: {
@@ -23,7 +25,8 @@ export async function GET() {
     },
     orderBy: { createdAt: "desc" },
   });
-  return NextResponse.json(products);
+  const shaped = products.map(({ thumbUrl, ...rest }) => ({ ...rest, hasPhoto: !!thumbUrl }));
+  return NextResponse.json(shaped);
 }
 
 export async function POST(req: NextRequest) {

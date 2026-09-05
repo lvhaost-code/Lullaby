@@ -17,7 +17,7 @@ function ProductCard({ p, onOpen }: { p: PublicProduct; onOpen: () => void }) {
       className="text-left rounded-xl overflow-hidden border border-stone-100 bg-white hover:shadow-md transition-shadow"
     >
       <div style={{ aspectRatio: "3/4", backgroundColor: "#F1E9E4" }}>
-        <ProductThumb photoUrl={p.thumbUrl} fill rounded={0} />
+        <ProductThumb photoUrl={p.hasPhoto ? `/api/public/products/${p.code}/thumb` : null} fill rounded={0} />
       </div>
       <div className="p-3">
         <div className="flex items-center justify-between gap-2">
@@ -42,9 +42,9 @@ function ProductCard({ p, onOpen }: { p: PublicProduct; onOpen: () => void }) {
 
 function ProductDetailModal({ p, onClose }: { p: PublicProduct; onClose: () => void }) {
   const [ranges, setRanges] = useState<{ pickupDate: string; returnDate: string }[] | null>(null);
-  // Show the list thumbnail immediately, then swap in the full gallery once
-  // it loads — the list response only carries the small thumbnail.
-  const [photos, setPhotos] = useState<string[]>(p.thumbUrl ? [p.thumbUrl] : []);
+  // Show the list thumbnail immediately (already browser-cached from the
+  // grid card), then swap in the full gallery once it loads.
+  const [photos, setPhotos] = useState<string[]>(p.hasPhoto ? [`/api/public/products/${p.code}/thumb`] : []);
 
   useEffect(() => {
     let alive = true;
