@@ -36,7 +36,7 @@ async function resizeToDataUrl(buffer, maxDim = 720, quality = 80) {
   return `data:image/jpeg;base64,${out.toString("base64")}`;
 }
 
-async function resizeThumbnail(buffer, maxDim = 160, quality = 65) {
+async function resizeThumbnail(buffer, maxDim = 400, quality = 72) {
   const out = await sharp(buffer).rotate().resize({ width: maxDim, height: maxDim, fit: "inside", withoutEnlargement: true }).jpeg({ quality }).toBuffer();
   return `data:image/jpeg;base64,${out.toString("base64")}`;
 }
