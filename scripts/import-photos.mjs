@@ -45,7 +45,7 @@ async function resizeToDataUrl(buffer, maxDim = 720, quality = 80) {
 
 // Small copy for list/grid views — see src/lib/thumbnail.ts (kept in sync
 // manually since this script runs outside the Next.js app).
-async function resizeThumbnail(buffer, maxDim = 400, quality = 72) {
+async function resizeThumbnail(buffer, maxDim = 600, quality = 80) {
   const out = await sharp(buffer).rotate().resize({ width: maxDim, height: maxDim, fit: "inside", withoutEnlargement: true }).jpeg({ quality }).toBuffer();
   return `data:image/jpeg;base64,${out.toString("base64")}`;
 }
