@@ -10,7 +10,7 @@ const RETENTION: Record<BackupKind, number> = { metadata: 30, full: 3 };
 export type BackupKind = "metadata" | "full";
 
 async function buildSnapshot(kind: BackupKind) {
-  const [products, orders, bookingRequests, users] = await Promise.all([
+  const [products, orders, bookingRequests, users, customers] = await Promise.all([
     prisma.product.findMany({
       select: {
         id: true,
@@ -32,17 +32,25 @@ async function buildSnapshot(kind: BackupKind) {
     prisma.order.findMany({ include: { items: { select: { code: true, rentPrice3: true } } } }),
     prisma.bookingRequest.findMany({ include: { items: { select: { code: true } } } }),
     prisma.user.findMany({ select: { id: true, username: true, name: true, role: true, createdAt: true } }),
+    prisma.customer.findMany(),
   ]);
 
   return {
-    version: 2,
+    version: 3,
     kind,
     createdAt: new Date().toISOString(),
-    counts: { products: products.length, orders: orders.length, bookingRequests: bookingRequests.length, users: users.length },
+    counts: {
+      products: products.length,
+      orders: orders.length,
+      bookingRequests: bookingRequests.length,
+      users: users.length,
+      customers: customers.length,
+    },
     products,
     orders,
     bookingRequests,
     users,
+    customers,
   };
 }
 

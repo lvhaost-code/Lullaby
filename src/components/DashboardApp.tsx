@@ -9,7 +9,7 @@ import { CustomersTab } from "@/components/CustomersTab";
 import { ReportsTab } from "@/components/ReportsTab";
 import { RequestsTab } from "@/components/RequestsTab";
 import { Toast, type ToastState } from "@/components/ui";
-import type { Product, ProductDetail, Order, BookingRequest } from "@/lib/types";
+import type { Product, ProductDetail, Order, BookingRequest, Customer } from "@/lib/types";
 
 const TABS = [
   { key: "products", label: "Kho sản phẩm", icon: Package },
@@ -26,16 +26,23 @@ export function DashboardApp() {
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [requests, setRequests] = useState<BookingRequest[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [tab, setTab] = useState<TabKey>("products");
   const [toast, setToast] = useState<ToastState>(null);
 
   useEffect(() => {
     (async () => {
       try {
-        const [pRes, oRes, rRes] = await Promise.all([fetch("/api/products"), fetch("/api/orders"), fetch("/api/booking-requests")]);
+        const [pRes, oRes, rRes, cRes] = await Promise.all([
+          fetch("/api/products"),
+          fetch("/api/orders"),
+          fetch("/api/booking-requests"),
+          fetch("/api/customers"),
+        ]);
         setProducts(await pRes.json());
         setOrders(await oRes.json());
         setRequests(await rRes.json());
+        setCustomers(await cRes.json());
       } catch {
         showToast("Không tải được dữ liệu, thử tải lại trang.", "error");
       } finally {
@@ -162,6 +169,41 @@ export function DashboardApp() {
     updateRequestStatus(request.id, "dismissed");
   }
 
+  async function saveCustomer(data: Omit<Customer, "id">, id: string | null) {
+    try {
+      const res = await fetch(id ? `/api/customers/${id}` : "/api/customers", {
+        method: id ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.error || "Lưu khách hàng thất bại, thử lại nhé.", "error");
+        return;
+      }
+      const saved: Customer = await res.json();
+      setCustomers((prev) => (id ? prev.map((c) => (c.id === id ? saved : c)) : [saved, ...prev]));
+      showToast(id ? "Đã cập nhật khách hàng." : "Đã thêm khách hàng mới.");
+    } catch {
+      showToast("Lưu khách hàng thất bại, thử lại nhé.", "error");
+    }
+  }
+
+  async function deleteCustomer(c: Customer) {
+    if (!window.confirm(`Xóa hồ sơ khách hàng ${c.name}?`)) return;
+    try {
+      const res = await fetch(`/api/customers/${c.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        showToast("Xóa khách hàng thất bại, thử lại nhé.", "error");
+        return;
+      }
+      setCustomers((prev) => prev.filter((x) => x.id !== c.id));
+      showToast("Đã xóa hồ sơ khách hàng.");
+    } catch {
+      showToast("Xóa khách hàng thất bại, thử lại nhé.", "error");
+    }
+  }
+
   return (
     <div style={{ backgroundColor: COLORS.cream, minHeight: "100%" }} className="min-h-full flex-1">
       <div className="sticky top-14 z-30 backdrop-blur-sm" style={{ backgroundColor: "rgba(251,246,242,0.92)", borderBottom: "1px solid #EEE3DD" }}>
@@ -205,7 +247,9 @@ export function DashboardApp() {
             {tab === "requests" && (
               <RequestsTab requests={requests} products={products} orders={orders} onConfirm={confirmRequest} onDismiss={dismissRequest} />
             )}
-            {tab === "customers" && <CustomersTab orders={orders} />}
+            {tab === "customers" && (
+              <CustomersTab orders={orders} customers={customers} onSaveCustomer={saveCustomer} onDeleteCustomer={deleteCustomer} />
+            )}
             {tab === "reports" && <ReportsTab orders={orders} />}
           </div>
         )}

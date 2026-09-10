@@ -53,10 +53,29 @@ model ProductPhoto {
   @@index([productId])
 }
 
+// Staff-maintained customer profile — separate from Order.customerName/
+// customerPhone (which just snapshot whatever was typed on that one
+// order). Rental history inside the app is still derived from Order by
+// phone (see CustomersTab), but rentalCount/rentedItems here let staff
+// record a customer's full history including rentals from before this
+// app existed (the old Excel workbook's order history was never
+// imported — only its product catalog was).
+model Customer {
+  id          String   @id @default(cuid())
+  name        String
+  phone       String   @unique
+  rentalCount Int? // "số lần thuê" — staff-maintained total, may include pre-app history
+  rentedItems String? // "các váy đã thuê" — free text (codes and/or descriptions)
+  preferences String? // "sở thích"
+  notes       String? // "lưu ý"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 // Customer identity is derived from (name, phone) on orders rather than a
-// separate table — matches the validated prototype logic (group by phone
-// in the Customers tab). Revisit if the shop wants customer-level fields
-// (loyalty notes, blacklist...) that don't belong on individual orders.
+// separate table for order history — matches the validated prototype
+// logic (group by phone in the Customers tab). Customer-level fields that
+// don't belong on individual orders live on the Customer model above.
 model Order {
   id              String      @id @default(cuid())
   customerName    String

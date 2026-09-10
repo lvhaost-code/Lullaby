@@ -58,6 +58,16 @@ export type PublicProduct = {
 
 export type PublicProductDetail = PublicProduct & { photos: string[] };
 
+export type Customer = {
+  id: string;
+  name: string;
+  phone: string;
+  rentalCount: number | null;
+  rentedItems: string | null;
+  preferences: string | null;
+  notes: string | null;
+};
+
 export type BookingRequest = {
   id: string;
   customerName: string;
