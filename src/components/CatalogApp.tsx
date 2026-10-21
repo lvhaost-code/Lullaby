@@ -170,7 +170,7 @@ function ProductDetailModal({ p, onClose }: { p: PublicProduct; onClose: () => v
             </div>
             <div className="text-sm mt-1" style={{ color: COLORS.roseDark }}>
               {formatVND(p.rentPrice3)} / 3 ngày
-              {p.rentPriceDay ? <span className="text-stone-400"> · {formatVND(p.rentPriceDay)} / ngày</span> : null}
+              {p.rentPriceDay ? <span className="text-stone-400"> · {formatVND(p.rentPriceDay)} / 7h</span> : null}
             </div>
             {p.deposit && <div className="text-xs text-stone-400 mt-0.5">Cọc: {p.deposit}</div>}
           </div>

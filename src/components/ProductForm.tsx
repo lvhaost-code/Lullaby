@@ -206,7 +206,7 @@ export function ProductForm({
         <Field label="Giá thuê 3 ngày">
           <input type="number" className={inputCls} value={f.rentPrice3} onChange={set("rentPrice3")} />
         </Field>
-        <Field label="Giá thuê 1 ngày">
+        <Field label="Giá thuê 7h">
           <input type="number" className={inputCls} value={f.rentPriceDay} onChange={set("rentPriceDay")} />
         </Field>
       </div>

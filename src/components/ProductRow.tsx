@@ -43,7 +43,7 @@ export function ProductRow({
         <td className="py-2 pr-3 text-stone-500 whitespace-nowrap">{p.size || "—"}</td>
         <td className="py-2 pr-3 whitespace-nowrap">
           {formatVND(p.rentPrice3)}
-          {p.rentPriceDay ? <span className="text-stone-400 text-xs"> / {formatVND(p.rentPriceDay)} (1 ngày)</span> : null}
+          {p.rentPriceDay ? <span className="text-stone-400 text-xs"> / {formatVND(p.rentPriceDay)} (7h)</span> : null}
         </td>
         <td className="py-2 pr-3">
           {tier && (
