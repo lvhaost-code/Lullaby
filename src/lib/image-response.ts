@@ -14,7 +14,7 @@ export function dataUrlToImageResponse(dataUrl: string | null): NextResponse {
   return new NextResponse(buffer, {
     headers: {
       "Content-Type": contentType,
-      "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
+      "Cache-Control": "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800",
     },
   });
 }

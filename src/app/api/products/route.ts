@@ -7,26 +7,31 @@ import { makeThumbnail } from "@/lib/thumbnail";
 // URL (GET /api/products/[id]/thumb) the browser fetches, caches, and
 // lazy-loads on its own, so a page only pays for the rows actually
 // rendered instead of every product's thumbnail regardless of pagination.
+// thumbUrl is never selected here: it's ~21 MB of base64 across the catalog,
+// and pulling it just to compute hasPhoto cost that much Neon network
+// transfer on every list call. A second query returns only the ids.
 export async function GET() {
-  const products = await prisma.product.findMany({
-    select: {
-      id: true,
-      code: true,
-      category: true,
-      brand: true,
-      costPrice: true,
-      rentPrice3: true,
-      rentPriceDay: true,
-      size: true,
-      deposit: true,
-      notes: true,
-      status: true,
-      thumbUrl: true,
-    },
-    orderBy: { createdAt: "desc" },
-  });
-  const shaped = products.map(({ thumbUrl, ...rest }) => ({ ...rest, hasPhoto: !!thumbUrl }));
-  return NextResponse.json(shaped);
+  const [products, withThumb] = await Promise.all([
+    prisma.product.findMany({
+      select: {
+        id: true,
+        code: true,
+        category: true,
+        brand: true,
+        costPrice: true,
+        rentPrice3: true,
+        rentPriceDay: true,
+        size: true,
+        deposit: true,
+        notes: true,
+        status: true,
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.product.findMany({ where: { thumbUrl: { not: null } }, select: { id: true } }),
+  ]);
+  const hasThumb = new Set(withThumb.map((p) => p.id));
+  return NextResponse.json(products.map((p) => ({ ...p, hasPhoto: hasThumb.has(p.id) })));
 }
 
 export async function POST(req: NextRequest) {
